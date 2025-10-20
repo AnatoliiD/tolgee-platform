@@ -3087,6 +3087,7 @@
   "translations_cell_cancel": "Cancel",
   "translations_cell_change_state": "Change state",
   "translations_cell_close": "Close",
+  "translations_cell_delete": "Delete",
   "translations_cell_edit": "Edit",
   "translations_cell_insert_base": "Insert base text",
   "translations_cell_outdated": "Outdated (base translation has changed)",
