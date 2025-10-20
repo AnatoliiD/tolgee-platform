@@ -30,13 +30,20 @@ tasks.register('installWebappDeps', Exec) {
     outputs.dir("${webappPath}/node_modules")
 }
 
+tasks.register('prepareWebapp', Exec) {
+    onlyIf { System.getenv("SKIP_WEBAPP_BUILD") != "true" }
+    commandLine npmCommandName, "run", "prepare"
+    workingDir = webappPath
+    dependsOn "installWebappDeps"
+}
+
 tasks.register('buildWebapp', Exec) {
     onlyIf { System.getenv("SKIP_WEBAPP_BUILD") != "true" }
     commandLine npmCommandName, "run", "build"
     workingDir = webappPath
     inputs.dir(webappPath)
     outputs.dir("${webappPath}/dist/")
-    dependsOn "installLibraryDeps", "installWebappDeps", "updateStaticTranslations"
+    dependsOn "installLibraryDeps", "prepareWebapp", "updateStaticTranslations"
 }
 
 tasks.register('createBuildDir') {

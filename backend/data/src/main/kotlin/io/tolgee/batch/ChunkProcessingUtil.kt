@@ -66,9 +66,11 @@ open class ChunkProcessingUtil(
     val activityRevision = activityHolder.activityRevision
     activityRevision.batchJobChunkExecution = execution
     job.projectId?.let {
-      val project = projectService.getDto(it)
-      activityRevision.projectId = project.id
-      activityRevision.organizationId = project.organizationOwnerId
+      val project = projectService.findDto(it)
+      if (project != null) {
+        activityRevision.projectId = project.id
+        activityRevision.organizationId = project.organizationOwnerId
+      }
     }
     activityHolder.activity = job.type.activityType
     activityRevision.authorId = job.authorId
@@ -240,8 +242,8 @@ open class ChunkProcessingUtil(
     entityManager
       .createQuery(
         """
-        from BatchJobChunkExecution 
-        where chunkNumber = :chunkNumber 
+        from BatchJobChunkExecution
+        where chunkNumber = :chunkNumber
             and batchJob.id = :batchJobId
             and status = :status
         """.trimIndent(),

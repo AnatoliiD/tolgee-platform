@@ -1,0 +1,12 @@
+# Build context is the repository root (see dockerFromSource in gradle/docker.gradle)
+**/node_modules
+**/build
+**/dist
+.gradle
+**/.gradle
+.kotlin
+**/.kotlin
+.idea
+email/out
+**/application-dev.yaml
+**/application-postgres.yaml
