@@ -1,12 +1,16 @@
 import clsx from 'clsx';
 import React, { useRef, useState } from 'react';
-import { useTranslate } from '@tolgee/react';
+import { T, useTranslate } from '@tolgee/react';
 import { Checkbox, styled, Tooltip, Box } from '@mui/material';
 import { Zap } from '@untitled-ui/icons-react';
 
 import { components } from 'tg.service/apiSchema.generated';
 import { stopBubble } from 'tg.fixtures/eventHandler';
 import { wrapIf } from 'tg.fixtures/wrapIf';
+import { confirmation } from 'tg.hooks/confirmation';
+import { useApiMutation } from 'tg.service/http/useQueryApi';
+import { messageService } from 'tg.service/MessageService';
+import { useProject } from 'tg.hooks/useProject';
 
 import { Tags } from './Tags/Tags';
 import { KeyCellContent } from './KeyCellContent';
@@ -139,7 +143,8 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
 }) => {
   const cellRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const { toggleSelect, groupToggleSelect, addTag } = useTranslationsActions();
+  const { toggleSelect, groupToggleSelect, addTag, refetchTranslations } =
+    useTranslationsActions();
   const { t } = useTranslate();
   const { onFileSelected, validateAndUpload, openFiles } = useScreenshotUpload({
     fileRef,
@@ -147,6 +152,7 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
   });
   const { satisfiesPermission } = useProjectPermissions();
   const canAddScreenshots = satisfiesPermission('screenshots.upload');
+  const project = useProject();
 
   const userIsDragging = useGlobalContext((c) => c.userIsDragging);
 
@@ -177,6 +183,33 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
       keyData: data,
       cellRef,
     });
+
+  const deleteKeysMutation = useApiMutation({
+    url: '/v2/projects/{projectId}/keys/{ids}',
+    method: 'delete',
+  });
+
+  const handleDeleteKey = () => {
+    confirmation({
+      title: <T keyName="translation_single_delete_title" />,
+      message: <T keyName="translation_single_delete_text" />,
+      onConfirm() {
+        deleteKeysMutation.mutate(
+          {
+            path: { projectId: project.id, ids: [data.keyId] },
+          },
+          {
+            onSuccess() {
+              messageService.success(
+                <T keyName="translation_single_delete_success" />
+              );
+              refetchTranslations();
+            },
+          }
+        );
+      },
+    });
+  };
 
   return (
     <>
@@ -275,6 +308,7 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
               <ControlsKey
                 onEdit={() => handleOpen()}
                 onAddScreenshot={canAddScreenshots ? openFiles : undefined}
+                onDelete={handleDeleteKey}
                 editEnabled={editEnabled}
               />
             ) : (
