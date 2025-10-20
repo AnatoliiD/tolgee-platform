@@ -35,8 +35,10 @@ class JsonFormatProcessorTest {
     mockUtil.mockIt("example.json", "src/test/resources/import/json/example.json")
     processFile()
     mockUtil.fileProcessorContext.assertLanguagesCount(1)
-    mockUtil.fileProcessorContext.assertTranslations("example", "common.save")
-    mockUtil.fileProcessorContext.assertTranslations("example", "array[0]")
+    mockUtil.fileProcessorContext
+      .assertTranslations("example", "common.save")
+    mockUtil.fileProcessorContext
+      .assertTranslations("example", "array[0]")
     mockUtil.fileProcessorContext
       .assertTranslations("example", "array[1]")
       .assertSingle {
@@ -206,6 +208,49 @@ class JsonFormatProcessorTest {
           "%D this is java",
         ),
       )
+  }
+
+  @Test
+  fun `imports ruby plurals correctly`() {
+    mockUtil.mockIt("en.json", "src/test/resources/import/json/ruby_plurals.json")
+    mockUtil.fileProcessorContext.params =
+      SingleStepImportRequest().also {
+        it.fileMappings = listOf(ImportFileMapping(fileName = "en.json", format = ImportFormat.JSON_RUBY))
+      }
+    processFile()
+    mockUtil.fileProcessorContext.assertLanguagesCount(1)
+    mockUtil.fileProcessorContext
+      .assertTranslations("en", "members_count")
+      .assertSinglePlural {
+        hasText(
+          """
+          {count, plural,
+          one {1 member}
+          other {# members}
+          }
+          """.trimIndent(),
+        )
+        isPluralOptimized()
+      }
+    mockUtil.fileProcessorContext
+      .assertTranslations("en", "items")
+      .assertSinglePlural {
+        hasText(
+          """
+          {count, plural,
+          zero {No items}
+          one {One item}
+          other {# items}
+          }
+          """.trimIndent(),
+        )
+        isPluralOptimized()
+      }
+    mockUtil.fileProcessorContext
+      .assertTranslations("en", "simple_key")
+      .assertSingle {
+        hasText("This is a simple translation")
+      }
   }
 
   private fun mockPlaceholderConversionTestFile(
