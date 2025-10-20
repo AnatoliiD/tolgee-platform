@@ -1,0 +1,12 @@
+{
+  "members_count": {
+    "one": "1 member",
+    "other": "%{count} members"
+  },
+  "items": {
+    "zero": "No items",
+    "one": "One item",
+    "other": "%{count} items"
+  },
+  "simple_key": "This is a simple translation"
+}

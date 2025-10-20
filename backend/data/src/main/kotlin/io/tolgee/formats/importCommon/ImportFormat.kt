@@ -69,6 +69,7 @@ enum class ImportFormat(
   ),
   JSON_RUBY(
     ImportFileFormat.JSON,
+    pluralsViaNesting = true,
     messageConvertorOrNull =
       GenericMapPluralImportRawDataConvertor(
         canContainIcu = false,
