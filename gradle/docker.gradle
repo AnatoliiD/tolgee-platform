@@ -84,3 +84,47 @@ tasks.register('copyDockerIgnore', Copy) {
     from "docker/app/.dockerignore"
     into "build/docker"
 }
+
+// Builds Docker image from source inside Docker (no local JDK/Node toolchain needed).
+// Uses docker/app/Dockerfile.build with the repository root as the build context.
+// Pass -PdockerImageTag=... to override the tag, -PdockerPush=true to build
+// multi-platform and push.
+def registerDockerFromSourceTask = { String taskName, String defaultTag, boolean oss ->
+    tasks.register(taskName, Exec) {
+        workingDir projectDir
+
+        def dockerfile = "docker/app/Dockerfile.build"
+        if (oss) {
+            // BuildKit reads <Dockerfile>.dockerignore next to the Dockerfile, so stage
+            // a copy with the OSS ignore file instead of touching the repo root
+            def ossDir = "${buildDir}/docker-oss"
+            dockerfile = "${ossDir}/Dockerfile.oss"
+            doFirst {
+                copy {
+                    from "docker/app/Dockerfile.build"
+                    into ossDir
+                    rename { "Dockerfile.oss" }
+                }
+                copy {
+                    from "docker/app/.dockerignore.oss"
+                    into ossDir
+                    rename { "Dockerfile.oss.dockerignore" }
+                }
+            }
+        }
+
+        def tag = project.findProperty('dockerImageTag') ?: defaultTag
+        def push = project.findProperty('dockerPush') == 'true'
+        def commandParams = ["docker", "buildx", "build", ".",
+            "-f", dockerfile,
+            "-t", tag,
+            "--build-arg", "OTEL_AGENT_VERSION=${opentelemetryJavaagentVersion}",
+            "--build-arg", "VERSION=${project.version}"]
+        commandParams += push ? ["--platform", "linux/arm64,linux/amd64", "--push"] : ["--load"]
+
+        commandLine commandParams
+    }
+}
+
+registerDockerFromSourceTask('dockerFromSource', 'tolgee/tolgee:source', false)
+registerDockerFromSourceTask('dockerFromSourceOss', 'tolgee/tolgee-oss', true)
