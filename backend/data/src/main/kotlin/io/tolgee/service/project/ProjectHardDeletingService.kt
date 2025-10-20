@@ -29,7 +29,6 @@ import io.tolgee.service.task.ITaskService
 import io.tolgee.service.translationMemory.TranslationMemoryManagementService
 import io.tolgee.util.Logging
 import jakarta.persistence.EntityManager
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.context.annotation.Lazy
 import org.springframework.scheduling.annotation.Async
@@ -56,7 +55,7 @@ class ProjectHardDeletingService(
   @Lazy
   private val self: ProjectHardDeletingService,
   private val aiPlaygroundResultService: AiPlaygroundResultService,
-  @Qualifier("promptServiceEeImpl") private val promptService: PromptService,
+  private val promptService: PromptService,
   private val importSettingsService: ImportSettingsService,
   private val glossaryCleanupService: GlossaryCleanupService,
   private val translationMemoryManagementService: TranslationMemoryManagementService,
