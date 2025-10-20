@@ -26,10 +26,18 @@ class YamlFileExporter(
       else -> exportParams.messageFormat ?: ExportMessageFormat.ICU
     }
 
+  private val modifiedExportParams =
+    exportParams.also { params ->
+      if (exportParams.format == ExportFormat.YAML_RUBY) {
+        // Ensure structureDelimiter is set to '.' for proper nesting in Rails YAML
+        params.structureDelimiter = '.'
+      }
+    }
+
   private val genericExporter =
     GenericStructuredFileExporter(
       translations = translations,
-      exportParams = exportParams,
+      exportParams = modifiedExportParams,
       projectIcuPlaceholdersSupport = projectIcuPlaceholdersSupport,
       objectMapper = objectMapper,
       rootKeyIsLanguageTag = rootKeyIsLanguageTag,
