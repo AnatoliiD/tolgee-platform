@@ -33,6 +33,6 @@ class PromptServiceOssImpl : PromptService {
   }
 
   override fun deleteAllByProjectId(projectId: Long) {
-    throw NotImplementedInOss()
+    // No-op: OSS doesn't have prompt functionality, so there are no prompts to delete
   }
 }
