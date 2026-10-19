@@ -30,7 +30,10 @@ import { TagInput } from './Tags/TagInput';
 import { KeyEditModal } from './KeyEdit/KeyEditModal';
 import { useKeyCell } from './useKeyCell';
 import { ALLOWED_UPLOAD_TYPES, Screenshots } from './Screenshots/Screenshots';
-import { useGlobalContext } from 'tg.globalContext/GlobalContext';
+import {
+  useGlobalActions,
+  useGlobalContext,
+} from 'tg.globalContext/GlobalContext';
 import { ScreenshotDropzone } from './Screenshots/ScreenshotDropzone';
 import { useScreenshotUpload } from './Screenshots/useScreenshotUpload';
 import { useProjectPermissions } from 'tg.hooks/useProjectPermissions';
@@ -153,6 +156,7 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
   const { satisfiesPermission } = useProjectPermissions();
   const canAddScreenshots = satisfiesPermission('screenshots.upload');
   const project = useProject();
+  const { refetchUsage } = useGlobalActions();
 
   const userIsDragging = useGlobalContext((c) => c.userIsDragging);
 
@@ -191,8 +195,18 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
 
   const handleDeleteKey = () => {
     confirmation({
-      title: <T keyName="translation_single_delete_title" />,
-      message: <T keyName="translation_single_delete_text" />,
+      title: (
+        <T
+          keyName="translation_single_delete_title"
+          defaultValue="Delete key"
+        />
+      ),
+      message: (
+        <T
+          keyName="translation_single_delete_text"
+          defaultValue="Do you really want to delete key with its translations?"
+        />
+      ),
       onConfirm() {
         deleteKeysMutation.mutate(
           {
@@ -201,9 +215,16 @@ export const CellKey: React.FC<React.PropsWithChildren<Props>> = ({
           {
             onSuccess() {
               messageService.success(
-                <T keyName="translation_single_delete_success" />
+                <T
+                  keyName="translation_single_delete_success"
+                  defaultValue="Key deleted!"
+                />
               );
+              if (isSelected) {
+                toggleSelect(data.keyId);
+              }
               refetchTranslations();
+              refetchUsage();
             },
           }
         );

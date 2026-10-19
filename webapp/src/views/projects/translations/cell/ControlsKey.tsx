@@ -65,7 +65,7 @@ export const ControlsKey: React.FC<React.PropsWithChildren<ControlsProps>> = ({
           onClick={onDelete}
           data-cy="translations-cell-delete-button"
           className={CELL_SHOW_ON_HOVER}
-          tooltip={t('translations_cell_delete')}
+          tooltip={t('translations_cell_delete', 'Delete')}
         >
           <Trash01 />
         </ControlsButton>
