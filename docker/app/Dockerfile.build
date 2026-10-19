@@ -1,6 +1,6 @@
-# Multi-stage Dockerfile that builds the application from source.
-# Used by the dockerFromSource / dockerFromSourceOss gradle tasks (see gradle/docker.gradle).
-# Requires BuildKit, which picks up Dockerfile.build.dockerignore automatically.
+# Multi-stage Dockerfile that builds the OSS application from source.
+# Used by the dockerFromSourceOss gradle task (see gradle/docker.gradle).
+# Requires BuildKit, which reads Dockerfile.build.dockerignore next to this file.
 
 FROM eclipse-temurin:25-jdk AS jdk
 
@@ -22,13 +22,14 @@ COPY gradle/ gradle/
 RUN chmod +x ./gradlew && ./gradlew --version --no-daemon
 
 COPY . /app/
+RUN if [ -e ee ] || [ -e webapp/src/ee ]; then \
+      echo "EE sources found in the build context - this image must be OSS-only" >&2; exit 1; fi
 
 ARG VERSION=local
 ENV VERSION=${VERSION}
 
 RUN SKIP_WEBAPP_BUILD=true ./gradlew :server-app:bootJar --no-daemon --stacktrace
 
-# Extract the JAR immediately after building
 RUN cd /app/backend/app/build/libs && \
     jar -xf *.jar && \
     rm *.jar && \
@@ -43,15 +44,15 @@ RUN apk add --no-cache bash git
 
 WORKDIR /app
 COPY . /app/
+RUN if [ -e ee ] || [ -e webapp/src/ee ]; then \
+      echo "EE sources found in the build context - this image must be OSS-only" >&2; exit 1; fi
 
 WORKDIR /app/library
 RUN npm ci
 
-# npm ci runs the "prepare" script too, but run it explicitly so the ee/oss module
-# symlink always matches the sources in the build context
+# npm ci also runs the "prepare" script, which links the ee or oss module
 WORKDIR /app/webapp
 RUN npm ci
-RUN npm run prepare
 RUN npm run build
 
 #############
@@ -83,7 +84,7 @@ COPY --from=backend-builder /app/backend/app/build/libs/BOOT-INF/lib /app/lib
 COPY --from=backend-builder /app/backend/app/build/libs/META-INF /app/META-INF
 COPY --from=backend-builder /app/backend/app/build/libs/BOOT-INF/classes /app
 
-# Copy built webapp to the correct location (overwriting any existing static files)
+# Copy the built webapp
 COPY --from=frontend-builder /app/webapp/dist /app/static
 
 # Copy startup script

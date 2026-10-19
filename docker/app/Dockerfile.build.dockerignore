@@ -1,4 +1,4 @@
-# Build context is the repository root (see dockerFromSource in gradle/docker.gradle)
+# Build context is the repository root (see dockerFromSourceOss in gradle/docker.gradle)
 **/node_modules
 **/build
 **/dist
@@ -8,5 +8,10 @@
 **/.kotlin
 .idea
 email/out
+backend/*/bin
 **/application-dev.yaml
 **/application-postgres.yaml
+
+# Leave out the enterprise sources - the image must be OSS-only
+ee
+webapp/src/ee

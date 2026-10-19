@@ -85,46 +85,21 @@ tasks.register('copyDockerIgnore', Copy) {
     into "build/docker"
 }
 
-// Builds Docker image from source inside Docker (no local JDK/Node toolchain needed).
-// Uses docker/app/Dockerfile.build with the repository root as the build context.
-// Pass -PdockerImageTag=... to override the tag, -PdockerPush=true to build
-// multi-platform and push.
-def registerDockerFromSourceTask = { String taskName, String defaultTag, boolean oss ->
-    tasks.register(taskName, Exec) {
-        workingDir projectDir
+// Builds the OSS Docker image from source inside Docker. The host only runs Gradle; compilation
+// (JDK 25, Node) happens in the image. Uses docker/app/Dockerfile.build with the repository root
+// as the build context; Dockerfile.build.dockerignore keeps the EE sources out of it.
+// Pass -PdockerImageTag=... to override the tag, -PdockerPush=true to build multi-platform and push.
+tasks.register('dockerFromSourceOss', Exec) {
+    workingDir projectDir
 
-        def dockerfile = "docker/app/Dockerfile.build"
-        if (oss) {
-            // BuildKit reads <Dockerfile>.dockerignore next to the Dockerfile, so stage
-            // a copy with the OSS ignore file instead of touching the repo root
-            def ossDir = "${buildDir}/docker-oss"
-            dockerfile = "${ossDir}/Dockerfile.oss"
-            doFirst {
-                copy {
-                    from "docker/app/Dockerfile.build"
-                    into ossDir
-                    rename { "Dockerfile.oss" }
-                }
-                copy {
-                    from "docker/app/.dockerignore.oss"
-                    into ossDir
-                    rename { "Dockerfile.oss.dockerignore" }
-                }
-            }
-        }
+    def tag = project.findProperty('dockerImageTag') ?: 'tolgee/tolgee-oss'
+    def push = project.findProperty('dockerPush') == 'true'
+    def commandParams = ["docker", "buildx", "build", ".",
+        "-f", "docker/app/Dockerfile.build",
+        "-t", tag,
+        "--build-arg", "OTEL_AGENT_VERSION=${opentelemetryJavaagentVersion}",
+        "--build-arg", "VERSION=${project.version}"]
+    commandParams += push ? ["--platform", "linux/arm64,linux/amd64", "--push"] : ["--load"]
 
-        def tag = project.findProperty('dockerImageTag') ?: defaultTag
-        def push = project.findProperty('dockerPush') == 'true'
-        def commandParams = ["docker", "buildx", "build", ".",
-            "-f", dockerfile,
-            "-t", tag,
-            "--build-arg", "OTEL_AGENT_VERSION=${opentelemetryJavaagentVersion}",
-            "--build-arg", "VERSION=${project.version}"]
-        commandParams += push ? ["--platform", "linux/arm64,linux/amd64", "--push"] : ["--load"]
-
-        commandLine commandParams
-    }
+    commandLine commandParams
 }
-
-registerDockerFromSourceTask('dockerFromSource', 'tolgee/tolgee:source', false)
-registerDockerFromSourceTask('dockerFromSourceOss', 'tolgee/tolgee-oss', true)
