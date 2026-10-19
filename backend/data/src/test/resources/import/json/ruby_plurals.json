@@ -8,5 +8,9 @@
     "one": "One item",
     "other": "%{count} items"
   },
-  "simple_key": "This is a simple translation"
+  "simple_key": "This is a simple translation",
+  "menu": {
+    "one": "Only one",
+    "title": "Menu"
+  }
 }

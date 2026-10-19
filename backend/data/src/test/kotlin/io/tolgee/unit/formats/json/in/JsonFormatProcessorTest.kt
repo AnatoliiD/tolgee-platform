@@ -35,10 +35,8 @@ class JsonFormatProcessorTest {
     mockUtil.mockIt("example.json", "src/test/resources/import/json/example.json")
     processFile()
     mockUtil.fileProcessorContext.assertLanguagesCount(1)
-    mockUtil.fileProcessorContext
-      .assertTranslations("example", "common.save")
-    mockUtil.fileProcessorContext
-      .assertTranslations("example", "array[0]")
+    mockUtil.fileProcessorContext.assertTranslations("example", "common.save")
+    mockUtil.fileProcessorContext.assertTranslations("example", "array[0]")
     mockUtil.fileProcessorContext
       .assertTranslations("example", "array[1]")
       .assertSingle {
@@ -250,6 +248,16 @@ class JsonFormatProcessorTest {
       .assertTranslations("en", "simple_key")
       .assertSingle {
         hasText("This is a simple translation")
+      }
+    mockUtil.fileProcessorContext
+      .assertTranslations("en", "menu.one")
+      .assertSingle {
+        hasText("Only one")
+      }
+    mockUtil.fileProcessorContext
+      .assertTranslations("en", "menu.title")
+      .assertSingle {
+        hasText("Menu")
       }
   }
 
