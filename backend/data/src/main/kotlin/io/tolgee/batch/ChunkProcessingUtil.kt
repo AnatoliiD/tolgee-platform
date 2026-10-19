@@ -67,10 +67,12 @@ open class ChunkProcessingUtil(
     activityRevision.batchJobChunkExecution = execution
     job.projectId?.let {
       val project = projectService.findDto(it)
-      if (project != null) {
-        activityRevision.projectId = project.id
-        activityRevision.organizationId = project.organizationOwnerId
+      if (project == null) {
+        logger.info("Cancelling chunk ${execution.id} of batch job ${job.id}: project $it no longer exists")
+        throw kotlinx.coroutines.CancellationException("Project $it no longer exists")
       }
+      activityRevision.projectId = project.id
+      activityRevision.organizationId = project.organizationOwnerId
     }
     activityHolder.activity = job.type.activityType
     activityRevision.authorId = job.authorId
