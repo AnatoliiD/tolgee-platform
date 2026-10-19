@@ -1,5 +1,8 @@
 package io.tolgee.unit.formats.yaml.out
 
+import io.tolgee.dtos.request.export.ExportParams
+import io.tolgee.formats.ExportFormat
+import io.tolgee.testing.assert
 import io.tolgee.unit.formats.yaml.out.YamlExportTestData.getAllFeaturesExporter
 import io.tolgee.unit.formats.yaml.out.YamlExportTestData.getIcuPlaceholdersDisabledExporter
 import io.tolgee.unit.formats.yaml.out.YamlExportTestData.getIcuPlaceholdersEnabledExporter
@@ -36,6 +39,40 @@ class RubyYamlFileExporterTest {
     |
       """.trimMargin(),
     )
+  }
+
+  @Test
+  fun `forces dot delimiter without changing the export params`() {
+    val exportParams =
+      ExportParams().also {
+        it.supportArrays = true
+        it.structureDelimiter = null
+        it.format = ExportFormat.YAML_RUBY
+      }
+    val data = getExported(getAllFeaturesExporter(exportParams))
+    data.assertFile(
+      "cs.yaml",
+      """
+    |---
+    |cs:
+    |  this:
+    |    is:
+    |      nested:
+    |        plural:
+    |          one: "%{count} den %{icuParam}"
+    |          few: "%{count} dny"
+    |          other: "%{count} dní"
+    |    '[1]':
+    |      is:
+    |        collision: "Colission"
+    |  this-is-array:
+    |  - object: "I will be first %<icuParam>d"
+    |  indexed params: "I will be first %s, %s"
+    |  named params: "I will be first %{param1}, %{param2}"
+    |
+      """.trimMargin(),
+    )
+    exportParams.structureDelimiter.assert.isNull()
   }
 
   @Test

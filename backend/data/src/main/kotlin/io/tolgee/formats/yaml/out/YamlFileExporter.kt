@@ -1,6 +1,7 @@
 package io.tolgee.formats.yaml.out
 
 import io.tolgee.dtos.IExportParams
+import io.tolgee.dtos.request.export.ExportParams
 import io.tolgee.formats.ExportFormat
 import io.tolgee.formats.ExportMessageFormat
 import io.tolgee.formats.genericStructuredFile.out.CustomPrettyPrinter
@@ -26,18 +27,21 @@ class YamlFileExporter(
       else -> exportParams.messageFormat ?: ExportMessageFormat.ICU
     }
 
-  private val modifiedExportParams =
-    exportParams.also { params ->
-      if (exportParams.format == ExportFormat.YAML_RUBY) {
-        // Ensure structureDelimiter is set to '.' for proper nesting in Rails YAML
-        params.structureDelimiter = '.'
+  // Rails I18n YAML needs dot-nested keys. Use a copy, because exportParams can be a persisted entity.
+  private val effectiveExportParams =
+    if (exportParams.format == ExportFormat.YAML_RUBY) {
+      ExportParams().also {
+        it.copyPropsFrom(exportParams)
+        it.structureDelimiter = '.'
       }
+    } else {
+      exportParams
     }
 
   private val genericExporter =
     GenericStructuredFileExporter(
       translations = translations,
-      exportParams = modifiedExportParams,
+      exportParams = effectiveExportParams,
       projectIcuPlaceholdersSupport = projectIcuPlaceholdersSupport,
       objectMapper = objectMapper,
       rootKeyIsLanguageTag = rootKeyIsLanguageTag,
