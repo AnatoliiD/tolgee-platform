@@ -8,6 +8,7 @@ import io.tolgee.AbstractSpringTest
 import io.tolgee.activity.data.ActivityType
 import io.tolgee.development.testDataBuilder.data.MtSettingsTestData
 import io.tolgee.development.testDataBuilder.data.PromptTestData
+import io.tolgee.development.testDataBuilder.data.TaskTestData
 import io.tolgee.development.testDataBuilder.data.TranslationCommentsTestData
 import io.tolgee.development.testDataBuilder.data.TranslationsTestData
 import io.tolgee.development.testDataBuilder.data.dataImport.ImportTestData
@@ -96,6 +97,26 @@ class LanguageServiceTest : AbstractSpringTest() {
     val testData = PromptTestData()
     testDataService.saveTestData(testData.root)
     languageService.hardDeleteLanguage(testData.czech.self.id)
+  }
+
+  @Test
+  fun `hard deletes language with tasks`() {
+    val testData = TaskTestData()
+    testDataService.saveTestData(testData.root)
+    val czech = testData.czechLanguage
+
+    executeInNewTransaction {
+      languageService.hardDeleteLanguage(czech.id)
+    }
+
+    executeInNewTransaction {
+      assertLanguageDeleted(czech)
+      entityManager
+        .createQuery("select count(t) from Task t where t.language.id = :id")
+        .setParameter("id", czech.id)
+        .singleResult.assert
+        .isEqualTo(0L)
+    }
   }
 
   @Test
