@@ -251,6 +251,26 @@ class ProjectHardDeletingServiceTest : AbstractSpringTest() {
   }
 
   @Test
+  fun `deletes project with prompts`() {
+    val testData = BaseTestData()
+    testData.projectBuilder.addPrompt {
+      name = "Custom prompt"
+      providerName = "organization-provider"
+      template = "Translate {{source}}"
+    }
+    testDataToClean = testData
+    testDataService.saveTestData(testData.root)
+
+    io.tolgee.util.executeInNewTransaction(platformTransactionManager) {
+      projectHardDeletingService.hardDeleteProject(testData.projectBuilder.self.refresh())
+    }
+
+    executeInNewTransaction {
+      projectService.find(testData.projectBuilder.self.id).assert.isNull()
+    }
+  }
+
+  @Test
   fun `deletes project with tasks`() {
     val testData = TaskTestData()
     testDataToClean = testData

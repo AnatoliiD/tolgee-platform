@@ -1,6 +1,5 @@
 package io.tolgee.service.task
 
-import io.tolgee.exceptions.NotImplementedInOss
 import io.tolgee.model.UserAccount
 import io.tolgee.model.enums.TaskType
 import io.tolgee.model.task.Task
@@ -13,7 +12,14 @@ class TaskServiceOssImpl(
   entityManager: EntityManager,
 ) : AbstractTaskService(entityManager) {
   override fun deleteAll(tasks: List<Task>) {
-    // No-op: OSS doesn't have task functionality, so there are no tasks to delete
+    // The task tables are part of the OSS schema and can hold rows (e.g. from a former EE instance)
+    if (tasks.isEmpty()) return
+    deleteNotificationsLinkedToTasks(tasks.map { it.id })
+    tasks.forEach { task ->
+      task.keys.forEach { entityManager.remove(it) }
+      task.assignees.clear()
+      entityManager.remove(task)
+    }
   }
 
   override fun findAssigneeById(
@@ -30,7 +36,6 @@ class TaskServiceOssImpl(
     userId: Long,
     type: TaskType?,
   ): List<UserAccount> {
-    // No-op: OSS doesn't have task functionality, so there are no tasks to retrieve
     return emptyList()
   }
 
@@ -38,12 +43,10 @@ class TaskServiceOssImpl(
     userId: Long,
     keyIds: Collection<Long>,
   ): Map<Long, List<TranslationToTaskView>> {
-    // No-op: OSS doesn't have task functionality, so there are no tasks to retrieve
     return emptyMap()
   }
 
   override fun getAgencyTasks(agencyId: Long): List<Task> {
-    // No-op: OSS doesn't have task functionality, so there are no tasks to retrieve
     return emptyList()
   }
 }

@@ -6,10 +6,13 @@ import io.tolgee.dtos.request.prompt.PromptRunDto
 import io.tolgee.exceptions.NotImplementedInOss
 import io.tolgee.model.Prompt
 import io.tolgee.model.enums.LlmProviderPriority
+import io.tolgee.repository.PromptRepository
 import org.springframework.stereotype.Service
 
 @Service
-class PromptServiceOssImpl : PromptService {
+class PromptServiceOssImpl(
+  private val promptRepository: PromptRepository,
+) : PromptService {
   override fun translate(
     projectId: Long,
     data: PromptRunDto,
@@ -33,6 +36,7 @@ class PromptServiceOssImpl : PromptService {
   }
 
   override fun deleteAllByProjectId(projectId: Long) {
-    // No-op: OSS doesn't have prompt functionality, so there are no prompts to delete
+    // The prompt table is part of the OSS schema and can hold rows (e.g. from a former EE instance)
+    promptRepository.deleteAllByProjectId(projectId)
   }
 }
